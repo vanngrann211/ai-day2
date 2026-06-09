@@ -1,536 +1,559 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Day 3: Understanding & Improving Your AI</title>
+<title>AI Workshop - Day 3: Image Classifier</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#0a0a0f; --surface:#111118; --surface2:#16161f;
-  --border:#1e1e2e; --accent:#00e5ff; --accent2:#ff6b35;
-  --accent3:#a855f7; --accent4:#22c55e;
-  --text:#e2e8f0; --muted:#64748b;
-}
+:root{--bg:#0a0a0f;--surface:#111118;--surface2:#16161f;
+--border:#1e1e2e;--accent:#00e5ff;--accent2:#ff6b35;--accent3:#a855f7;--accent4:#22c55e;
+--text:#e2e8f0;--muted:#64748b;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);
-  display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:1.5rem 1rem 4rem;}
+display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:1.5rem 1rem 4rem;}
 .topbar{width:100%;max-width:960px;display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:1.2rem;padding-bottom:1rem;border-bottom:1px solid var(--border);}
+margin-bottom:1.2rem;padding-bottom:1rem;border-bottom:1px solid var(--border);}
 .brand{font-family:'Poppins',sans-serif;font-size:.75rem;color:var(--accent);letter-spacing:.2em;font-weight:700;}
 .brand small{display:block;color:var(--muted);font-size:.65rem;margin-top:.3rem;letter-spacing:.05em;font-weight:400;}
 .stage{width:100%;max-width:960px;}
 .slide{display:none;background:var(--surface);border:1px solid var(--border);
-  min-height:500px;padding:2.8rem 3.2rem;flex-direction:column;justify-content:center;
-  position:relative;overflow:hidden;animation:sIn .3s ease forwards;}
+min-height:500px;padding:2.8rem 3.2rem;flex-direction:column;justify-content:center;
+position:relative;overflow:hidden;animation:sIn .3s ease forwards;}
 .slide.active{display:flex;}
 @keyframes sIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
 .slide::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;
-  background:linear-gradient(180deg,var(--accent),transparent 80%);}
+background:linear-gradient(180deg,var(--accent),transparent 80%);}
 .slide::after{content:'';position:absolute;inset:0;
-  background-image:linear-gradient(rgba(0,229,255,.018) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,229,255,.018) 1px,transparent 1px);
-  background-size:44px 44px;pointer-events:none;}
+background-image:linear-gradient(rgba(0,229,255,.018) 1px,transparent 1px),
+linear-gradient(90deg,rgba(0,229,255,.018) 1px,transparent 1px);
+background-size:44px 44px;pointer-events:none;}
 .stag{font-family:'Inter',sans-serif;font-size:.65rem;color:var(--accent);
-  letter-spacing:.2em;text-transform:uppercase;margin-bottom:.9rem;}
+letter-spacing:.2em;text-transform:uppercase;margin-bottom:.9rem;}
 .sh1{font-size:2.8rem;font-weight:800;line-height:1.05;color:#fff;margin-bottom:.9rem;font-family:'Poppins',sans-serif;}
 .sh1 .hl{color:var(--accent);}
 .sh2{font-size:1.85rem;font-weight:800;color:#fff;margin-bottom:1.2rem;font-family:'Poppins',sans-serif;}
-.sub{font-size:.95rem;color:var(--muted);line-height:1.7;max-width:520px;}
+.sub{font-size:.95rem;color:var(--muted);line-height:1.7;max-width:560px;}
 .blist{list-style:none;display:flex;flex-direction:column;gap:.65rem;}
-.blist li{display:flex;gap:.8rem;font-size:.92rem;line-height:1.55;color:#cbd5e1;align-items:flex-start;}
-.blist li::before{content:'▸';color:var(--accent);font-size:.75rem;margin-top:.18rem;flex-shrink:0;}
+.blist li{display:flex;gap:.8rem;font-size:.9rem;line-height:1.5;color:#cbd5e1;align-items:flex-start;}
+.blist li::before{content:'>';color:var(--accent);font-family:'Courier New',monospace;font-size:.8rem;margin-top:.1rem;flex-shrink:0;}
 .code-box{background:#07070d;border:1px solid var(--border);border-left:3px solid var(--accent4);
-  padding:1.1rem 1.3rem;font-family:'Inter',monospace;font-size:.73rem;
-  color:#a8c8e0;line-height:1.9;overflow-x:auto;white-space:pre;margin:.8rem 0;}
-.infobox{background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.15);
-  padding:1rem 1.2rem;}
-.infobox .ilabel{font-family:'Inter',sans-serif;font-size:.62rem;
-  color:var(--accent);letter-spacing:.1em;margin-bottom:.4rem;}
+padding:1rem 1.2rem;font-family:'Courier New',monospace;font-size:.72rem;
+color:#a8c8e0;line-height:1.75;overflow-x:auto;white-space:pre;margin:.6rem 0;}
+.code-box.small{font-size:.63rem;line-height:1.55;}
+.out-box{background:#000;border:1px solid var(--border);border-left:3px solid var(--accent4);
+padding:.7rem 1rem;font-family:'Courier New',monospace;font-size:.7rem;
+color:#86efac;line-height:1.7;overflow-x:auto;white-space:pre;margin:.3rem 0 .6rem;}
+.infobox{background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.15);padding:1rem 1.2rem;}
+.infobox .ilabel{font-family:'Inter',sans-serif;font-size:.62rem;color:var(--accent);letter-spacing:.1em;margin-bottom:.4rem;}
 .infobox p{font-size:.85rem;color:#cbd5e1;line-height:1.6;}
 .abox{background:rgba(255,107,53,.07);border:1px solid rgba(255,107,53,.22);
-  border-left:3px solid var(--accent2);padding:1.2rem 1.4rem;margin-top:.8rem;}
-.abox .alabel{font-family:'Inter',sans-serif;font-size:.62rem;
-  color:var(--accent2);letter-spacing:.15em;margin-bottom:.5rem;}
+border-left:3px solid var(--accent2);padding:1.2rem 1.4rem;margin-top:.8rem;}
+.abox .alabel{font-family:'Inter',sans-serif;font-size:.62rem;color:var(--accent2);letter-spacing:.15em;margin-bottom:.5rem;}
 .abox p{font-size:.88rem;color:#e2e8f0;line-height:1.6;}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
-.card{background:var(--surface2);border:1px solid var(--border);padding:1.1rem 1.3rem;}
-.ctag{font-family:'Inter',sans-serif;font-size:.62rem;color:var(--accent);
-  letter-spacing:.1em;margin-bottom:.4rem;}
-.card p{font-size:.84rem;color:#94a3b8;line-height:1.55;}
-.activity-box{background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.15);
-  border-left:3px solid var(--accent);padding:1.2rem 1.4rem;margin:1rem 0;}
-.activity-label{font-family:'Inter',sans-serif;font-size:.62rem;
-  color:var(--accent);letter-spacing:.15em;margin-bottom:.5rem;text-transform:uppercase;}
 .analogy{background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.22);
-  border-left:3px solid var(--accent3);padding:1.1rem 1.3rem;margin-top:.8rem;}
-.analogy .alabel2{font-family:'Inter',sans-serif;font-size:.62rem;
-  color:var(--accent3);letter-spacing:.15em;margin-bottom:.5rem;text-transform:uppercase;}
+border-left:3px solid var(--accent3);padding:1.1rem 1.3rem;margin-top:.8rem;}
+.analogy .alabel2{font-family:'Inter',sans-serif;font-size:.62rem;color:var(--accent3);letter-spacing:.15em;margin-bottom:.5rem;text-transform:uppercase;}
 .analogy p{font-size:.86rem;color:#e2e8f0;line-height:1.6;}
+.activity-box{background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.15);
+border-left:3px solid var(--accent);padding:1.2rem 1.4rem;margin:.8rem 0;}
+.activity-label{font-family:'Inter',sans-serif;font-size:.62rem;
+color:var(--accent);letter-spacing:.15em;margin-bottom:.5rem;text-transform:uppercase;}
+.steps ol{font-size:.86rem;color:#cbd5e1;line-height:1.6;margin-left:1.5rem;margin-top:.4rem;}
+.steps li{margin-bottom:.35rem;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;}
+.card{background:var(--surface2);border:1px solid var(--border);padding:1rem 1.2rem;}
+.ctag{font-family:'Inter',sans-serif;font-size:.62rem;color:var(--accent);letter-spacing:.1em;margin-bottom:.4rem;}
+.card p{font-size:.84rem;color:#94a3b8;line-height:1.55;}
+.warnbox{background:rgba(255,107,53,.06);border:1px solid rgba(255,107,53,.25);border-left:3px solid var(--accent2);padding:1rem 1.2rem;}
+.warnbox .wlabel{font-family:'Inter',sans-serif;font-size:.62rem;color:var(--accent2);letter-spacing:.1em;margin-bottom:.4rem;}
+.warnbox p{font-size:.85rem;color:#e2e8f0;line-height:1.6;}
 .nav{width:100%;max-width:960px;display:flex;align-items:center;
-  justify-content:space-between;margin-top:1.5rem;gap:1rem;}
+justify-content:space-between;margin-top:1.5rem;gap:1rem;}
 .nbtn{background:none;border:1px solid var(--border);color:var(--text);
-  font-family:'Inter',sans-serif;font-size:.72rem;padding:.55rem 1.2rem;
-  cursor:pointer;letter-spacing:.08em;transition:all .2s;}
+font-family:'Inter',sans-serif;font-size:.72rem;padding:.55rem 1.2rem;
+cursor:pointer;letter-spacing:.08em;transition:all .2s;}
 .nbtn:hover{border-color:var(--accent);color:var(--accent);}
 .nbtn:disabled{opacity:.2;cursor:not-allowed;}
 .pbar{flex:1;height:2px;background:var(--border);}
 .pfill{height:100%;background:var(--accent);transition:width .3s;}
-.scnt{font-family:'Inter',sans-serif;font-size:.62rem;color:var(--muted);min-width:55px;text-align:right;}
+.scnt{font-family:'Courier New',monospace;font-size:.62rem;color:var(--muted);min-width:55px;text-align:right;}
 </style>
 </head>
 <body>
-
 <div class="topbar">
-  <div class="brand">DAY 3<small>Understanding the Code & Making Your AI Smarter</small></div>
+  <div class="brand">DAY 3<small>Build a Real Image Classifier</small></div>
 </div>
-
 <div class="stage">
 
 <div class="slide active" id="s1">
-  <div class="stag">Welcome Back</div>
-  <h1 class="sh1">Now Let's<br><span class="hl">Understand</span><br>What We Built</h1>
-  <p class="sub">Yesterday you wrote code and trained a model. Today we slow down. We go through every line you typed and explain exactly what it did in plain English. Then we make your AI smarter. No prior knowledge needed.</p>
+  <div class="stag">Welcome</div>
+  <h1 class="sh1">Build Real AI<br><span class="hl">From Scratch</span></h1>
+  <p class="sub">Day 1 you trained a model with no code. Day 2 you learned Python. Today you combine them: you write the code that builds, trains, and tests a real neural network that recognizes images. By the end you will have AI you built yourself, line by line.</p>
 </div>
 
 <div class="slide" id="s2">
-  <div class="stag">Today's Plan</div>
-  <h2 class="sh2">What We're Doing Today</h2>
+  <div class="stag">Recap</div>
+  <h2 class="sh2">The Python You Need Today</h2>
+  <p style="font-size:.88rem;color:var(--muted);margin-bottom:1rem;">Everything you write today uses Day 2 concepts. Nothing new about Python itself.</p>
   <ul class="blist">
-    <li>Part 1: Review every activity from Day 2 in plain English</li>
-    <li>Part 2: Understand the words (epoch, loss, accuracy, layers)</li>
-    <li>Part 3: Make your model more accurate</li>
-    <li>Part 4: Learn why models sometimes fail</li>
-    <li>Part 5: Hands-on improvements you can try</li>
+    <li><strong>import</strong> - load the TensorFlow library</li>
+    <li><strong>variables</strong> - store the data and the model</li>
+    <li><strong>lists</strong> - the class names and the predictions</li>
+    <li><strong>functions</strong> - call the model's build, train, and predict actions</li>
+    <li><strong>for loops</strong> - step through images to display predictions</li>
   </ul>
-  <div class="infobox" style="margin-top:1rem;">
-    <div class="ilabel">DON'T WORRY</div>
-    <p>If Day 2 felt fast or confusing, that's normal. Today is about understanding. By the end, you'll know exactly what each piece of code does.</p>
+  <div class="analogy">
+    <div class="alabel2">Today's New Idea</div>
+    <p>The only new thing is the TensorFlow library itself - the toolkit that makes neural networks. The Python wrapping it is all familiar.</p>
   </div>
 </div>
 
 <div class="slide" id="s3">
-  <div class="stag">The Big Picture</div>
-  <h2 class="sh2">What Is a Machine Learning Model, Really?</h2>
-  <p style="font-size:0.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">A model is just a giant math equation that takes an input (an image) and produces an output (a guess about what the image is).</p>
-  <div class="analogy">
-    <div class="alabel2">Think Of It Like This</div>
-    <p>Imagine a student who has never seen a cat. You show them 1,000 photos labeled "cat" and 1,000 labeled "dog". After studying, they can look at a NEW photo and guess "cat" or "dog". The model is that student. Training is the studying. The photos are the data.</p>
+  <div class="stag">The Goal</div>
+  <h2 class="sh2">What You Are Building</h2>
+  <p style="font-size:.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">An image classifier: a neural network that looks at a small photo and decides which of 10 categories it belongs to.</p>
+  <div class="two-col">
+    <div class="card">
+      <div class="ctag">THE 10 CATEGORIES</div>
+      <p>airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck</p>
+    </div>
+    <div class="card">
+      <div class="ctag">THE RESULT</div>
+      <p>Show it a photo of a dog it has never seen. It answers "dog" with a confidence score. Real machine learning, built by you.</p>
+    </div>
+  </div>
+  <div class="infobox" style="margin-top:1rem;">
+    <div class="ilabel">THE SAME IDEA AS DAY 1</div>
+    <p>Teachable Machine did this with your webcam. Today you build the same kind of system in code, so you understand what was happening under the hood.</p>
   </div>
 </div>
 
 <div class="slide" id="s4">
-  <div class="stag">Day 2 Review</div>
-  <h2 class="sh2">Activity 1-2: Setting Up Colab</h2>
-  <p style="font-size:0.88rem;color:var(--muted);margin-bottom:0.8rem;">What you typed:</p>
+  <div class="stag">Tools</div>
+  <h2 class="sh2">TensorFlow and Keras</h2>
+  <p style="font-size:.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:.8rem;">TensorFlow is Google's free AI library. Keras is the friendly part of it that lets you build models in just a few lines. Both come pre-installed in Colab.</p>
   <div class="code-box">import tensorflow as tf
+from tensorflow.keras import layers, models
+
 print("TensorFlow version:", tf.__version__)</div>
-  <div class="activity-box">
-    <div class="activity-label">What This Actually Did</div>
-    <p><strong>import tensorflow as tf</strong> = "Go grab Google's AI toolbox and let me call it 'tf' for short." TensorFlow is a free library (collection of code) made by Google that does all the hard math of AI for you. Without it, you'd write thousands of lines yourself.</p>
+  <div class="infobox">
+    <div class="ilabel">REMEMBER FROM DAY 2</div>
+    <p>import loads a library. "as tf" gives it a short nickname so you can type tf instead of tensorflow every time. This is the same import you practiced yesterday, just a bigger library.</p>
   </div>
 </div>
 
 <div class="slide" id="s5">
-  <div class="stag">Day 2 Review</div>
-  <h2 class="sh2">Activity 3: Loading the Pre-Trained Model</h2>
-  <p style="font-size:0.88rem;color:var(--muted);margin-bottom:0.8rem;">What you typed:</p>
-  <div class="code-box">base_model = MobileNetV2(weights='imagenet',
-                         include_top=False)</div>
-  <div class="activity-box">
-    <div class="activity-label">What This Actually Did</div>
-    <p>MobileNetV2 is a model Google ALREADY trained on millions of images. <strong>weights='imagenet'</strong> means "give me the version that already learned from 14 million photos." Instead of starting from zero, you borrow Google's knowledge.</p>
-  </div>
-  <div class="analogy">
-    <div class="alabel2">Plain English</div>
-    <p>It's like hiring someone who already knows how to see shapes, edges, and colors. You just teach them YOUR specific categories on top of what they know.</p>
-  </div>
+  <div class="stag">The Data</div>
+  <h2 class="sh2">Meet CIFAR-10</h2>
+  <p style="font-size:.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">CIFAR-10 is a famous dataset: 60,000 small color photos (32 by 32 pixels), each labeled with one of 10 categories. It is built into TensorFlow, so there are no files to download or upload.</p>
+  <ul class="blist">
+    <li>50,000 images for training (teaching the model)</li>
+    <li>10,000 images for testing (checking if it learned)</li>
+    <li>Every image is already labeled with the correct answer</li>
+    <li>This is exactly the labeled training data we discussed on Day 1</li>
+  </ul>
 </div>
 
 <div class="slide" id="s6">
-  <div class="stag">Day 2 Review</div>
-  <h2 class="sh2">What Is "Transfer Learning"?</h2>
-  <p style="font-size:0.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">This is the trick that made Activity 3 work. It has a fancy name but a simple idea.</p>
+  <div class="stag">Concept</div>
+  <h2 class="sh2">How a Computer Sees an Image</h2>
+  <p style="font-size:.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:.8rem;">A computer does not see a picture. It sees numbers. Every image is a grid of pixels, and every pixel is three numbers: how much red, green, and blue it contains.</p>
   <div class="analogy">
-    <div class="alabel2">The Idea</div>
-    <p>If you already know how to ride a bike, learning a motorcycle is easier. You "transfer" your balance skills. Transfer learning means taking a model that learned from millions of images and reusing that knowledge for your smaller task. This is why we don't need millions of images ourselves.</p>
+    <div class="alabel2">The Analogy</div>
+    <p>A 32 by 32 color image is just 32 x 32 x 3 = 3,072 numbers. The neural network learns which patterns of numbers mean "cat" and which mean "truck." That is all image recognition really is: finding patterns in numbers.</p>
   </div>
-  <p style="font-size:0.85rem;color:var(--muted);margin-top:1rem;">Without transfer learning, you'd need a supercomputer and weeks of training. With it, you train in minutes.</p>
+  <div class="infobox" style="margin-top:.8rem;">
+    <div class="ilabel">CONNECTING TO DAY 2</div>
+    <p>Remember lists? An image is a list of pixel values. The dataset is a list of images. AI is built on the lists you already understand.</p>
+  </div>
 </div>
 
 <div class="slide" id="s7">
-  <div class="stag">Day 2 Review</div>
-  <h2 class="sh2">Activity 4: Adding Your Own Layers</h2>
-  <p style="font-size:0.88rem;color:var(--muted);margin-bottom:0.8rem;">What you typed:</p>
-  <div class="code-box">prediction_layer = layers.Dense(10, activation='softmax')</div>
+  <div class="stag">Setup</div>
+  <h2 class="sh2">Open Colab and Turn On the GPU</h2>
   <div class="activity-box">
-    <div class="activity-label">What This Actually Did</div>
-    <p>A <strong>layer</strong> is a step in the model's thinking. <strong>Dense(10)</strong> means "create a final step with 10 outputs" because CIFAR-10 has 10 categories. <strong>softmax</strong> turns the model's raw numbers into percentages that add up to 100 percent.</p>
+    <div class="activity-label">Step-by-Step</div>
+    <div class="steps"><ol>
+      <li>Go to colab.research.google.com and start a New Notebook</li>
+      <li>Click Runtime in the top menu, then Change runtime type</li>
+      <li>Under Hardware accelerator, choose T4 GPU, then Save</li>
+      <li>This makes training much faster and is completely free</li>
+      <li>You are ready to start writing code</li>
+    </ol></div>
   </div>
-  <div class="analogy">
-    <div class="alabel2">Softmax In Plain English</div>
-    <p>Instead of saying "cat: 8.3, dog: 2.1", softmax says "cat: 85 percent, dog: 15 percent." Much easier to understand. The category with the highest percent wins.</p>
+  <div class="warnbox" style="margin-top:.8rem;">
+    <div class="wlabel">RUN CELLS IN ORDER</div>
+    <p>Each activity goes in its own cell and they build on each other. Always run them top to bottom. If Colab disconnects, you must re-run every cell from the start, or later cells will not find the data and model.</p>
   </div>
 </div>
 
 <div class="slide" id="s8">
-  <div class="stag">Day 2 Review</div>
-  <h2 class="sh2">What Are "Layers"? Why So Many?</h2>
-  <p style="font-size:0.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">A neural network is made of layers stacked on top of each other. Each layer looks for something different.</p>
-  <div class="analogy">
-    <div class="alabel2">How Layers See an Image</div>
-    <p>Layer 1 finds edges and lines. Layer 2 combines edges into shapes. Layer 3 combines shapes into parts (an eye, an ear). Layer 4 combines parts into objects (a face). Each layer builds on the one before. That's how a model goes from pixels to "that's a cat."</p>
-  </div>
+  <div class="stag">Activity 1</div>
+  <h2 class="sh2">Load the Data</h2>
+  <p style="font-size:.86rem;color:var(--muted);margin-bottom:.5rem;">New cell. This loads all 60,000 images in one line:</p>
+  <div class="code-box">import tensorflow as tf
+from tensorflow.keras import layers, models
+import numpy as np
+import matplotlib.pyplot as plt
+
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.cifar10.load_data()
+
+class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
+               'dog', 'frog', 'horse', 'ship', 'truck']
+
+print("Training images:", x_train.shape)
+print("Test images:", x_test.shape)</div>
+  <div class="out-box">Training images: (50000, 32, 32, 3)
+Test images: (10000, 32, 32, 3)</div>
 </div>
 
 <div class="slide" id="s9">
-  <div class="stag">Day 2 Review</div>
-  <h2 class="sh2">Activity 5: Compiling the Model</h2>
-  <p style="font-size:0.88rem;color:var(--muted);margin-bottom:0.8rem;">What you typed:</p>
-  <div class="code-box">model.compile(optimizer='adam',
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])</div>
-  <div class="activity-box">
-    <div class="activity-label">What This Actually Did</div>
-    <p>Compiling means "set the rules for how the model learns." <strong>optimizer='adam'</strong> is the strategy for improving. <strong>loss</strong> measures how wrong the model is. <strong>metrics=['accuracy']</strong> tells it to track how often it's right.</p>
+  <div class="stag">Understanding</div>
+  <h2 class="sh2">Reading Those Numbers</h2>
+  <p style="font-size:.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:.8rem;">The shape (50000, 32, 32, 3) tells you everything about the data:</p>
+  <ul class="blist">
+    <li><strong>50000</strong> - the number of images</li>
+    <li><strong>32, 32</strong> - each image is 32 pixels wide and 32 pixels tall</li>
+    <li><strong>3</strong> - three color channels: red, green, blue</li>
+  </ul>
+  <div class="infobox" style="margin-top:1rem;">
+    <div class="ilabel">x AND y</div>
+    <p>x_train holds the images. y_train holds the correct labels (the answers). This naming is a convention in AI: x is the input, y is the answer. You will see it everywhere.</p>
   </div>
 </div>
 
 <div class="slide" id="s10">
-  <div class="stag">Key Term</div>
-  <h2 class="sh2">What Is "Loss"?</h2>
-  <p style="font-size:0.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">Loss is a number that measures how wrong the model is. High loss = very wrong. Low loss = pretty good. The whole point of training is to make loss go DOWN.</p>
-  <div class="analogy">
-    <div class="alabel2">Like a Golf Score</div>
-    <p>In golf, lower is better. Loss is the same. When you train and watch loss drop from 2.3 to 0.8 to 0.4, that means your model is getting less wrong each round. That's learning happening in real time.</p>
+  <div class="stag">Activity 2</div>
+  <h2 class="sh2">Look at the Images</h2>
+  <p style="font-size:.86rem;color:var(--muted);margin-bottom:.5rem;">New cell. See what you are working with. This uses a for loop, exactly like Day 2:</p>
+  <div class="code-box small">plt.figure(figsize=(10, 4))
+
+for i in range(10):
+    plt.subplot(2, 5, i + 1)
+    plt.imshow(x_train[i])
+    plt.title(class_names[y_train[i][0]])
+    plt.axis('off')
+
+plt.show()</div>
+  <div class="infobox">
+    <div class="ilabel">WHAT YOU SEE</div>
+    <p>Ten small photos appear, each with its label. They look blurry because they are only 32 pixels. That is intentional: small images train fast and the model still learns to recognize them.</p>
   </div>
 </div>
 
 <div class="slide" id="s11">
-  <div class="stag">Key Term</div>
-  <h2 class="sh2">What Is the "Optimizer" (Adam)?</h2>
-  <p style="font-size:0.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">The optimizer is the method the model uses to get better. Adam is the most popular one. It decides how much to adjust the model after each mistake.</p>
-  <div class="analogy">
-    <div class="alabel2">Like Studying Smarter</div>
-    <p>Imagine you got a test question wrong. A good optimizer figures out exactly how to adjust your studying so you get it right next time. Adam is very good at making these small, smart adjustments automatically.</p>
-  </div>
+  <div class="stag">Activity 3</div>
+  <h2 class="sh2">Prepare the Data</h2>
+  <p style="font-size:.86rem;color:var(--muted);margin-bottom:.5rem;">New cell. Use a smaller subset so training finishes quickly in class, and scale the pixels:</p>
+  <div class="code-box small">x_train_small = x_train[:5000] / 255.0
+y_train_small = y_train[:5000]
+
+x_test_small = x_test[:1000] / 255.0
+y_test_small = y_test[:1000]
+
+print("Using", x_train_small.shape[0], "training images")
+print("Using", x_test_small.shape[0], "test images")</div>
+  <div class="out-box">Using 5000 training images
+Using 1000 test images</div>
 </div>
 
 <div class="slide" id="s12">
-  <div class="stag">Day 2 Review</div>
-  <h2 class="sh2">Activity 6: Loading the Data</h2>
-  <p style="font-size:0.88rem;color:var(--muted);margin-bottom:0.8rem;">What you typed (simplified):</p>
-  <div class="code-box">(x_train, y_train), (x_test, y_test) = cifar10.load_data()
-x_train = x_train.astype('float32') / 255.0</div>
-  <div class="activity-box">
-    <div class="activity-label">What This Actually Did</div>
-    <p><strong>x_train</strong> = the images. <strong>y_train</strong> = the correct answers (labels). The <strong>/ 255.0</strong> part shrinks every pixel value to be between 0 and 1. Computers learn better with small, tidy numbers.</p>
-  </div>
+  <div class="stag">Concept</div>
+  <h2 class="sh2">Why Divide by 255?</h2>
+  <p style="font-size:.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:.8rem;">Pixel values range from 0 to 255. Dividing every pixel by 255 squeezes them into a range of 0 to 1. This is called normalization.</p>
   <div class="analogy">
-    <div class="alabel2">Why Divide by 255?</div>
-    <p>Pixel colors go from 0 to 255. Dividing by 255 squishes them to 0-to-1. It's like converting big messy measurements to clean percentages. The model trains faster and more reliably this way.</p>
+    <div class="alabel2">The Analogy</div>
+    <p>Neural networks learn better with small, consistent numbers. It is like the difference between giving someone directions in inches versus miles. Same information, but one scale is much easier to work with. Models train faster and more reliably on 0-to-1 values.</p>
   </div>
 </div>
 
 <div class="slide" id="s13">
-  <div class="stag">Key Term</div>
-  <h2 class="sh2">Training Data vs Test Data</h2>
-  <div class="two-col">
-    <div>
-      <div class="card">
-        <div class="ctag">TRAINING DATA (x_train)</div>
-        <p>The images the model studies and learns from. Like homework problems with the answers shown.</p>
-      </div>
-    </div>
-    <div>
-      <div class="card">
-        <div class="ctag">TEST DATA (x_test)</div>
-        <p>Images the model has NEVER seen. Like a final exam. This tells us if it actually learned or just memorized.</p>
-      </div>
-    </div>
-  </div>
-  <div class="infobox" style="margin-top:1.2rem;">
-    <div class="ilabel">WHY SEPARATE THEM?</div>
-    <p>If you tested a student using the exact homework they already saw, of course they'd ace it. To know if they REALLY learned, you give new questions. Same with AI.</p>
+  <div class="stag">Activity 4</div>
+  <h2 class="sh2">Build the Neural Network</h2>
+  <p style="font-size:.86rem;color:var(--muted);margin-bottom:.5rem;">New cell. This is the model itself - the brain you are building:</p>
+  <div class="code-box small">model = models.Sequential([
+    layers.Input(shape=(32, 32, 3)),
+    layers.Conv2D(32, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    layers.MaxPooling2D((2, 2)),
+    layers.Flatten(),
+    layers.Dense(64, activation='relu'),
+    layers.Dense(10)
+])
+
+model.summary()</div>
+  <div class="infobox">
+    <div class="ilabel">DO NOT PANIC</div>
+    <p>This looks like a lot, but it is just a list of layers - using the list syntax from Day 2. Each layer does one job. The next slide explains every line.</p>
   </div>
 </div>
 
 <div class="slide" id="s14">
-  <div class="stag">Day 2 Review</div>
-  <h2 class="sh2">Activity 7: Training (model.fit)</h2>
-  <p style="font-size:0.88rem;color:var(--muted);margin-bottom:0.8rem;">What you typed:</p>
-  <div class="code-box">history = model.fit(train_data, epochs=5)</div>
-  <div class="activity-box">
-    <div class="activity-label">What This Actually Did</div>
-    <p><strong>model.fit</strong> is the command that says "start studying now." This is where the actual learning happens. The model looks at images, makes guesses, checks if it was right, and adjusts. Over and over.</p>
+  <div class="stag">Concept</div>
+  <h2 class="sh2">What Each Layer Does</h2>
+  <ul class="blist">
+    <li><strong>Conv2D</strong> - scans the image for visual patterns like edges, curves, and textures</li>
+    <li><strong>MaxPooling2D</strong> - shrinks the image down, keeping only the important parts</li>
+    <li><strong>Flatten</strong> - turns the 2D grid of patterns into a single long list</li>
+    <li><strong>Dense(64)</strong> - a layer of 64 decision-making neurons</li>
+    <li><strong>Dense(10)</strong> - the final layer: one output per category (10 categories)</li>
+  </ul>
+  <div class="analogy" style="margin-top:.8rem;">
+    <div class="alabel2">The Big Picture</div>
+    <p>Early layers find simple patterns (edges). Later layers combine them into complex ones (a cat's ear, a truck's wheel). The final layer votes on which of the 10 categories it sees.</p>
   </div>
 </div>
 
 <div class="slide" id="s15">
-  <div class="stag">Key Term</div>
-  <h2 class="sh2">What Is an "Epoch"?</h2>
-  <p style="font-size:0.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">An epoch is one full pass through ALL your training images. If you set epochs=5, the model studies every image 5 times.</p>
-  <div class="analogy">
-    <div class="alabel2">Like Re-Reading a Textbook</div>
-    <p>Reading a textbook once, you catch some things. Reading it 5 times, you catch much more. Each epoch, the model notices patterns it missed before. But too many epochs can cause a problem we'll cover soon.</p>
+  <div class="stag">Activity 5</div>
+  <h2 class="sh2">Compile the Model</h2>
+  <p style="font-size:.86rem;color:var(--muted);margin-bottom:.5rem;">New cell. Before training, you tell the model how to learn:</p>
+  <div class="code-box small">model.compile(
+    optimizer='adam',
+    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+    metrics=['accuracy']
+)
+
+print("Model compiled and ready to train")</div>
+  <div class="infobox">
+    <div class="ilabel">THREE SETTINGS</div>
+    <p>optimizer is the strategy for improving. loss measures how wrong the model is (the goal is to make this small). metrics is what we want to watch - accuracy, the percent it gets right.</p>
   </div>
 </div>
 
 <div class="slide" id="s16">
-  <div class="stag">Key Term</div>
-  <h2 class="sh2">What Is a "Batch"?</h2>
-  <p style="font-size:0.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">A batch is a small group of images the model looks at together before adjusting. We used batches of 16. So it studies 16 images, adjusts, then the next 16.</p>
-  <div class="analogy">
-    <div class="alabel2">Why Not All At Once?</div>
-    <p>Imagine trying to memorize 3,000 flashcards in one glance. Impossible. Instead, you go through 16 at a time. Easier on your brain and your computer's memory. That's why batches exist. It also prevents the RAM crashes we saw on Day 2.</p>
+  <div class="stag">Concept</div>
+  <h2 class="sh2">How Training Actually Works</h2>
+  <p style="font-size:.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:.8rem;">Training is a loop, the same idea as Day 2's for loops. For each round, the model:</p>
+  <ul class="blist">
+    <li>Looks at training images and guesses their categories</li>
+    <li>Checks its guesses against the correct labels</li>
+    <li>Measures how wrong it was (the loss)</li>
+    <li>Adjusts its internal settings slightly to do better next round</li>
+    <li>Repeats. Each full pass through the data is called an epoch</li>
+  </ul>
+  <div class="analogy" style="margin-top:.8rem;">
+    <div class="alabel2">The Analogy</div>
+    <p>Like studying flashcards. Each pass through the deck, you learn from mistakes and improve. More passes (epochs) usually means better accuracy, up to a point.</p>
   </div>
 </div>
 
 <div class="slide" id="s17">
-  <div class="stag">Day 2 Review</div>
-  <h2 class="sh2">Activity 8: Evaluating Accuracy</h2>
-  <p style="font-size:0.88rem;color:var(--muted);margin-bottom:0.8rem;">What you typed:</p>
-  <div class="code-box">test_loss, test_accuracy = model.evaluate(x_test, y_test)</div>
-  <div class="activity-box">
-    <div class="activity-label">What This Actually Did</div>
-    <p>This gave the model its final exam using the test images it never saw. <strong>test_accuracy</strong> tells you what percent it got right. If you got 40 percent, the model correctly identified 4 out of every 10 new images.</p>
-  </div>
-  <div class="analogy">
-    <div class="alabel2">Putting Accuracy In Context</div>
-    <p>With 10 categories, random guessing gets 10 percent. So 40 percent means your model learned real patterns. It's 4x better than guessing.</p>
+  <div class="stag">Activity 6</div>
+  <h2 class="sh2">Train It</h2>
+  <p style="font-size:.86rem;color:var(--muted);margin-bottom:.5rem;">New cell. This is the moment. Run it and watch the model learn:</p>
+  <div class="code-box small">history = model.fit(
+    x_train_small, y_train_small,
+    epochs=10,
+    validation_data=(x_test_small, y_test_small)
+)</div>
+  <div class="out-box">Epoch 1/10
+157/157 - accuracy: 0.28 - val_accuracy: 0.41
+Epoch 2/10
+157/157 - accuracy: 0.45 - val_accuracy: 0.48
+...
+Epoch 10/10
+157/157 - accuracy: 0.74 - val_accuracy: 0.61</div>
+  <div class="warnbox" style="margin-top:.6rem;">
+    <div class="wlabel">THIS TAKES A FEW MINUTES</div>
+    <p>Watch the accuracy climb with each epoch. That number rising is your model genuinely learning.</p>
   </div>
 </div>
 
 <div class="slide" id="s18">
-  <div class="stag">Day 2 Review</div>
-  <h2 class="sh2">Activity 9: Making Predictions</h2>
-  <p style="font-size:0.88rem;color:var(--muted);margin-bottom:0.8rem;">What you typed (simplified):</p>
-  <div class="code-box">prediction = model.predict(test_image)
-class_idx = np.argmax(prediction)</div>
-  <div class="activity-box">
-    <div class="activity-label">What This Actually Did</div>
-    <p><strong>model.predict</strong> shows the model one image and asks "what is this?" It returns 10 percentages. <strong>np.argmax</strong> finds the highest percentage and gives you its position. That position matches a category name.</p>
-  </div>
-  <div class="analogy">
-    <div class="alabel2">argmax In Plain English</div>
-    <p>If the model says [cat: 5%, dog: 80%, bird: 15%], argmax points to "dog" because 80 is the biggest. It just means "pick the winner."</p>
+  <div class="stag">Understanding</div>
+  <h2 class="sh2">Reading the Training Output</h2>
+  <ul class="blist">
+    <li><strong>accuracy</strong> - how well it does on the training images it studies</li>
+    <li><strong>val_accuracy</strong> - how well it does on test images it has never seen</li>
+    <li>val_accuracy is the honest score. It shows real-world performance</li>
+    <li>Both should rise over the epochs as the model learns</li>
+  </ul>
+  <div class="infobox" style="margin-top:1rem;">
+    <div class="ilabel">WHAT IS A GOOD SCORE?</div>
+    <p>With 5,000 images and a simple model, around 60 percent on val_accuracy is a solid classroom result. Random guessing across 10 categories would be 10 percent, so 60 percent means real learning happened.</p>
   </div>
 </div>
 
 <div class="slide" id="s19">
-  <div class="stag">Checkpoint</div>
-  <h2 class="sh2">You Now Understand the Whole Pipeline</h2>
-  <ul class="blist">
-    <li>Import TensorFlow = grab the AI toolbox</li>
-    <li>Load MobileNetV2 = borrow Google's pre-trained brain</li>
-    <li>Add layers = add your own categories on top</li>
-    <li>Compile = set the learning rules</li>
-    <li>Load data = get images and split into train/test</li>
-    <li>Fit = actually train (study the images)</li>
-    <li>Evaluate = give the final exam</li>
-    <li>Predict = ask about a single new image</li>
-  </ul>
-  <div class="infobox" style="margin-top:1rem;">
-    <div class="ilabel">THAT'S IT</div>
-    <p>Every image AI in the world follows this same pattern. You now understand the core of modern machine learning.</p>
+  <div class="stag">Concept</div>
+  <h2 class="sh2">Overfitting: The Warning Sign</h2>
+  <p style="font-size:.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:.8rem;">If training accuracy keeps rising but val_accuracy stops or drops, that is overfitting - the model is memorizing the training images instead of learning general patterns.</p>
+  <div class="analogy">
+    <div class="alabel2">The Analogy</div>
+    <p>Like a student who memorizes the practice test answers but fails the real exam because the questions are different. We saw this on Day 1 with Teachable Machine. The fix is more data or a simpler model.</p>
   </div>
 </div>
 
 <div class="slide" id="s20">
-  <div class="stag">The Big Problem</div>
-  <h2 class="sh2">What Is "Overfitting"?</h2>
-  <p style="font-size:0.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">This is the most important concept in all of machine learning. Overfitting is when a model memorizes instead of learning.</p>
-  <div class="analogy">
-    <div class="alabel2">The Memorizer Student</div>
-    <p>Imagine a student who memorizes the exact homework answers but doesn't understand the concepts. They ace the homework (training data) but fail the exam (test data) because the questions are slightly different. That's overfitting. High training accuracy, low test accuracy.</p>
+  <div class="stag">Activity 7</div>
+  <h2 class="sh2">Test the Final Accuracy</h2>
+  <p style="font-size:.86rem;color:var(--muted);margin-bottom:.5rem;">New cell. Get one clear score on the test set:</p>
+  <div class="code-box small">test_loss, test_accuracy = model.evaluate(x_test_small, y_test_small)
+
+print("Final test accuracy:", round(test_accuracy * 100, 1), "percent")</div>
+  <div class="out-box">Final test accuracy: 61.3 percent</div>
+  <div class="infobox">
+    <div class="ilabel">YOU DID THIS</div>
+    <p>That percentage is your model correctly identifying images it has never seen before. You built and trained a working neural network from scratch.</p>
   </div>
 </div>
 
 <div class="slide" id="s21">
-  <div class="stag">Spotting Problems</div>
-  <h2 class="sh2">How To Tell If Your Model Overfit</h2>
-  <div class="two-col">
-    <div>
-      <div class="card">
-        <div class="ctag">HEALTHY MODEL</div>
-        <p>Training accuracy: 75%. Test accuracy: 70%. Close together. The model learned real patterns.</p>
-      </div>
-    </div>
-    <div>
-      <div class="card">
-        <div class="ctag">OVERFIT MODEL</div>
-        <p>Training accuracy: 99%. Test accuracy: 45%. Big gap. The model memorized instead of learning.</p>
-      </div>
-    </div>
-  </div>
-  <p style="font-size:0.85rem;color:var(--muted);margin-top:1.2rem;">The warning sign is a BIG GAP between training and test accuracy. Watch for it.</p>
+  <div class="stag">Activity 8</div>
+  <h2 class="sh2">Make Predictions</h2>
+  <p style="font-size:.86rem;color:var(--muted);margin-bottom:.5rem;">New cell. Ask the model about specific images. This uses np.argmax to find the top guess:</p>
+  <div class="code-box small">predictions = model.predict(x_test_small)
+
+for i in range(5):
+    guess = class_names[np.argmax(predictions[i])]
+    actual = class_names[y_test_small[i][0]]
+    print("Image", i, "- guessed:", guess, "| actual:", actual)</div>
+  <div class="out-box">Image 0 - guessed: cat | actual: cat
+Image 1 - guessed: ship | actual: ship
+Image 2 - guessed: airplane | actual: ship
+Image 3 - guessed: airplane | actual: airplane
+Image 4 - guessed: frog | actual: frog</div>
 </div>
 
 <div class="slide" id="s22">
-  <div class="stag">The Fix</div>
-  <h2 class="sh2">What Is "Data Augmentation"?</h2>
-  <p style="font-size:0.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">One way to fight overfitting. It means creating new training images by slightly changing the ones you have: flipping, rotating, zooming.</p>
-  <div class="analogy">
-    <div class="alabel2">More Practice, Free</div>
-    <p>If you only study one photo of a cat, you might only recognize cats facing left. But if you flip and rotate that photo, the model learns "a cat is a cat from any angle." You get more variety without taking new photos.</p>
+  <div class="stag">Activity 9</div>
+  <h2 class="sh2">See the Predictions</h2>
+  <p style="font-size:.86rem;color:var(--muted);margin-bottom:.5rem;">New cell. Show the images next to the model's guesses:</p>
+  <div class="code-box small">plt.figure(figsize=(12, 5))
+
+for i in range(10):
+    plt.subplot(2, 5, i + 1)
+    plt.imshow(x_test_small[i])
+    guess = class_names[np.argmax(predictions[i])]
+    actual = class_names[y_test_small[i][0]]
+    color = 'green' if guess == actual else 'red'
+    plt.title(guess, color=color)
+    plt.axis('off')
+
+plt.show()</div>
+  <div class="infobox">
+    <div class="ilabel">GREEN AND RED</div>
+    <p>Green titles are correct guesses, red are mistakes. Seeing where your model fails is one of the most useful things in AI. The mistakes teach you how to improve it.</p>
   </div>
 </div>
 
 <div class="slide" id="s23">
-  <div class="stag">Before You Start</div>
-  <h2 class="sh2">Rebuild Your Model First</h2>
-  <p style="font-size:0.88rem;color:#cbd5e1;line-height:1.6;margin-bottom:0.8rem;">Colab forgets everything when a session ends. Open your Day 2 notebook and re-run all your cells from top to bottom (Runtime menu, "Run all"). That rebuilds your model and data in memory. THEN do today's activities in new cells below.</p>
+  <div class="stag">Experiment</div>
+  <h2 class="sh2">Improve Your Model</h2>
   <div class="abox">
-    <div class="alabel">QUICK CHECK</div>
-    <p>Run this in a new cell. If it prints your model summary with no error, you're ready. If you get "NameError: model not defined", you skipped the re-run. Go back and run all Day 2 cells first.</p>
+    <div class="alabel">Try These Changes</div>
+    <p>Go back and re-run with one change at a time. Build the model again, recompile, retrain, and compare the accuracy:</p>
+    <ul style="margin-left:1.5rem;margin-top:.5rem;font-size:.86rem;line-height:1.7;">
+      <li>Use more images: change 5000 to 15000 and 1000 to 3000</li>
+      <li>Train longer: change epochs from 10 to 20</li>
+      <li>Add more neurons: change Dense(64) to Dense(128)</li>
+    </ul>
+    <p style="margin-top:.5rem;">Which change helped the most? Which barely mattered? This is what real AI engineers do all day.</p>
   </div>
-  <div class="code-box">model.summary()</div>
+  <div class="warnbox" style="margin-top:.6rem;">
+    <div class="wlabel">REBUILD FIRST</div>
+    <p>If you change the model, you must re-run the build cell (Activity 4), the compile cell (Activity 5), and the train cell (Activity 6) again in order.</p>
+  </div>
 </div>
 
 <div class="slide" id="s24">
-  <div class="stag">Hands-On</div>
-  <h2 class="sh2">Activity 1: Add Data Augmentation</h2>
-  <p style="font-size:0.88rem;color:var(--muted);margin-bottom:0.8rem;">Create a NEW code cell. This adds image variety automatically:</p>
-  <div class="code-box">data_augmentation = tf.keras.Sequential([
-    tf.keras.layers.RandomFlip('horizontal'),
-    tf.keras.layers.RandomRotation(0.1),
-    tf.keras.layers.RandomZoom(0.1),
-])
-print("Augmentation ready!")</div>
-  <div class="activity-box" style="margin-top:1rem;">
-    <div class="activity-label">What Each Line Does</div>
-    <p><strong>RandomFlip</strong> flips images left-right. <strong>RandomRotation(0.1)</strong> rotates them slightly. <strong>RandomZoom(0.1)</strong> zooms in a little. Now the model sees more variety and learns better.</p>
+  <div class="stag">Troubleshooting</div>
+  <h2 class="sh2">Common Errors and Fixes</h2>
+  <div class="two-col">
+    <div class="card">
+      <div class="ctag">NameError: model not defined</div>
+      <p>You skipped a cell or Colab restarted. Re-run every cell from the top in order.</p>
+    </div>
+    <div class="card">
+      <div class="ctag">Training is very slow</div>
+      <p>The GPU is not on. Runtime menu, Change runtime type, select T4 GPU, then re-run all cells.</p>
+    </div>
+  </div>
+  <div class="two-col" style="margin-top:.8rem;">
+    <div class="card">
+      <div class="ctag">Session crashed / out of RAM</div>
+      <p>Too many images. Lower the subset back to 5000 training and 1000 test.</p>
+    </div>
+    <div class="card">
+      <div class="ctag">Accuracy stuck near 10 percent</div>
+      <p>Something is off with the data prep. Re-run Activity 3 and check you divided by 255.</p>
+    </div>
   </div>
 </div>
 
 <div class="slide" id="s25">
-  <div class="stag">Hands-On</div>
-  <h2 class="sh2">Activity 2: Train Longer and Compare</h2>
-  <p style="font-size:0.88rem;color:var(--muted);margin-bottom:0.8rem;">Create a NEW code cell. Train for more epochs and watch both accuracies:</p>
-  <div class="code-box">history = model.fit(
-    train_data,
-    epochs=10,
-    validation_data=(x_test, y_test),
-    verbose=1)</div>
-  <div class="activity-box" style="margin-top:1rem;">
-    <div class="activity-label">What's New Here</div>
-    <p><strong>validation_data</strong> makes the model check its test accuracy after every epoch. Now you can WATCH for overfitting live. If training accuracy climbs but validation accuracy stalls, that's the warning sign.</p>
+  <div class="stag">What You Built</div>
+  <h2 class="sh2">Look What You Just Did</h2>
+  <ul class="blist">
+    <li>Loaded a real dataset of 60,000 labeled images</li>
+    <li>Built a convolutional neural network from scratch in code</li>
+    <li>Trained it and watched its accuracy climb each epoch</li>
+    <li>Tested it on images it had never seen</li>
+    <li>Made predictions and visualized its correct guesses and mistakes</li>
+    <li>Understood overfitting and how to improve a model</li>
+  </ul>
+  <div class="infobox" style="margin-top:1rem;">
+    <div class="ilabel">THIS IS REAL MACHINE LEARNING</div>
+    <p>The same process scales up to the AI that powers self-driving cars and medical imaging. You used a small dataset, but the method is identical.</p>
   </div>
 </div>
 
 <div class="slide" id="s26">
-  <div class="stag">Hands-On</div>
-  <h2 class="sh2">Activity 3: Plot Your Results</h2>
-  <p style="font-size:0.88rem;color:var(--muted);margin-bottom:0.8rem;">Create a NEW code cell. See your training as a graph:</p>
-  <div class="code-box">import matplotlib.pyplot as plt
-
-plt.plot(history.history['accuracy'], label='Training')
-plt.plot(history.history['val_accuracy'], label='Validation')
-plt.xlabel('Epoch')
-plt.ylabel('Accuracy')
-plt.legend()
-plt.show()</div>
-  <div class="activity-box" style="margin-top:1rem;">
-    <div class="activity-label">What You'll See</div>
-    <p>Two lines on a graph. If they rise together, healthy. If the training line shoots up but validation flattens, you're overfitting. This is how real ML engineers diagnose models.</p>
+  <div class="stag">Homework</div>
+  <h2 class="sh2">Push Your Model Further</h2>
+  <div class="abox">
+    <div class="alabel">Due Next Class</div>
+    <p>In your Colab notebook, run at least three experiments from the Improve Your Model slide. For each one, record:</p>
+    <ul style="margin-left:1.5rem;margin-top:.5rem;font-size:.86rem;line-height:1.7;">
+      <li>What you changed</li>
+      <li>The val_accuracy before and after</li>
+      <li>Whether it helped, hurt, or did nothing</li>
+    </ul>
+    <p style="margin-top:.5rem;">Bring your best accuracy score to class. We will see who tuned the best model.</p>
   </div>
 </div>
 
 <div class="slide" id="s27">
-  <div class="stag">Hands-On</div>
-  <h2 class="sh2">Activity 4: Experiment With One Change</h2>
-  <div class="abox">
-    <div class="alabel">YOUR CHALLENGE</div>
-    <p>Pick ONE thing to change, then retrain and see if accuracy improves. Try one of these: change epochs from 10 to 15, or change the Dense layer to add more neurons (try Dense(128, activation='relu') before the final layer), or add another augmentation line.</p>
-  </div>
-  <p style="font-size:0.85rem;color:var(--muted);margin-top:1rem;">Change only ONE thing at a time. That's how scientists work. If you change five things and accuracy improves, you won't know which one helped.</p>
-</div>
-
-<div class="slide" id="s28">
-  <div class="stag">Key Term</div>
-  <h2 class="sh2">What Is a "Neuron"?</h2>
-  <p style="font-size:0.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">When we write Dense(128), the 128 is the number of neurons. A neuron is a tiny decision-maker that looks at the input and votes on the answer.</p>
-  <div class="analogy">
-    <div class="alabel2">Like a Jury</div>
-    <p>More neurons is like having more jury members. Each one looks at the evidence and votes. More voters can mean smarter decisions, but too many can also lead to memorizing (overfitting). Balance matters.</p>
-  </div>
-</div>
-
-<div class="slide" id="s29">
-  <div class="stag">Key Term</div>
-  <h2 class="sh2">What Is "ReLU"?</h2>
-  <p style="font-size:0.9rem;color:#cbd5e1;line-height:1.7;margin-bottom:1rem;">You'll see activation='relu' in many models. ReLU is a simple rule: if a number is negative, make it zero. If positive, keep it.</p>
-  <div class="analogy">
-    <div class="alabel2">Why It Matters</div>
-    <p>ReLU lets the model handle complex patterns. Without it, the model could only learn straight-line relationships. ReLU adds the ability to learn curves and complicated shapes. It's a tiny rule that unlocks huge power.</p>
-  </div>
-</div>
-
-<div class="slide" id="s30">
-  <div class="stag">Reflection</div>
-  <h2 class="sh2">The Vocabulary You Now Know</h2>
+  <div class="stag">Preview</div>
+  <h2 class="sh2">Day 4: Teaching AI to Use Words</h2>
   <ul class="blist">
-    <li><strong>Model:</strong> a math equation that makes guesses</li>
-    <li><strong>Layer:</strong> one step in the model's thinking</li>
-    <li><strong>Neuron:</strong> a tiny decision-maker inside a layer</li>
-    <li><strong>Epoch:</strong> one full pass through all training images</li>
-    <li><strong>Batch:</strong> a small group studied together</li>
-    <li><strong>Loss:</strong> how wrong the model is (lower is better)</li>
-    <li><strong>Accuracy:</strong> how often it's right (higher is better)</li>
-    <li><strong>Overfitting:</strong> memorizing instead of learning</li>
+    <li>Today your AI understood images. Tomorrow it understands language</li>
+    <li>Learn how language models like ChatGPT actually work</li>
+    <li>See the difference between classifying images and generating text</li>
+    <li>Build your first chatbot in Colab</li>
+    <li>This sets up Day 5, where you fine-tune your own AI on data you write</li>
   </ul>
-</div>
-
-<div class="slide" id="s31">
-  <div class="stag">Homework</div>
-  <h2 class="sh2">Beat Your Best Score</h2>
-  <div class="abox">
-    <div class="alabel">DUE: NEXT CLASS</div>
-    <p>Take your model and try to improve its test accuracy. Make changes one at a time. Keep a text file noting what you changed and what accuracy you got. Bring your best result and tell us what change made the biggest difference. The goal is to understand cause and effect, not just to get a high number.</p>
-  </div>
-</div>
-
-<div class="slide" id="s32">
-  <div class="stag">Final Words</div>
-  <h2 class="sh2">You Speak AI Now</h2>
-  <p style="font-size:0.95rem;color:#e2e8f0;margin-bottom:1rem;">A week ago, words like epoch, loss, and overfitting meant nothing. Now you understand them AND the code behind them. You can read real machine learning code and know what it does.</p>
-  <div class="infobox">
-    <div class="ilabel">WHAT'S NEXT</div>
-    <p>Tomorrow we explore where AI is going, the ethics of it, and the careers that need exactly these skills. You've built the foundation. Now we build on it.</p>
+  <div class="analogy">
+    <div class="alabel2">The Arc</div>
+    <p>Image classifier today. Language model tomorrow. Your own trained chatbot on Day 5. Each day builds directly on the last.</p>
   </div>
 </div>
 
 </div>
-
 <div class="nav">
   <button class="nbtn" id="prev-btn" onclick="changeSlide(-1)" disabled>PREV</button>
   <div class="pbar"><div class="pfill" id="progress"></div></div>
-  <div class="scnt" id="counter">1 / 32</div>
+  <div class="scnt" id="counter">1 / 27</div>
   <button class="nbtn" id="next-btn" onclick="changeSlide(1)">NEXT</button>
 </div>
-
 <script>
-let currentSlide = 1;
-const totalSlides = 32;
-function changeSlide(dir) {
-  const prev = document.getElementById('s' + currentSlide);
-  if(prev) prev.classList.remove('active');
-  currentSlide = Math.min(Math.max(currentSlide + dir, 1), totalSlides);
-  const next = document.getElementById('s' + currentSlide);
-  if(next) next.classList.add('active');
-  updateNav();
+let cur=1;const tot=27;
+function changeSlide(d){
+  document.getElementById('s'+cur).classList.remove('active');
+  cur=Math.min(Math.max(cur+d,1),tot);
+  document.getElementById('s'+cur).classList.add('active');
+  document.getElementById('prev-btn').disabled=cur===1;
+  document.getElementById('next-btn').disabled=cur===tot;
+  document.getElementById('counter').textContent=cur+' / '+tot;
+  document.getElementById('progress').style.width=((cur/tot)*100)+'%';
+  window.scrollTo(0,0);
 }
-function updateNav() {
-  document.getElementById('prev-btn').disabled = currentSlide === 1;
-  document.getElementById('next-btn').disabled = currentSlide === totalSlides;
-  document.getElementById('counter').textContent = currentSlide + ' / ' + totalSlides;
-  document.getElementById('progress').style.width = ((currentSlide/totalSlides)*100)+'%';
-}
-document.addEventListener('keydown', e => {
-  if(e.key==='ArrowRight'||e.key==='ArrowDown') changeSlide(1);
-  if(e.key==='ArrowLeft'||e.key==='ArrowUp') changeSlide(-1);
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')changeSlide(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')changeSlide(-1);
 });
-updateNav();
+document.getElementById('progress').style.width=((1/tot)*100)+'%';
 </script>
 </body>
 </html>
